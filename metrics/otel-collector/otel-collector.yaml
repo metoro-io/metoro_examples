@@ -1,0 +1,103 @@
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: prometheus
+  labels:
+    name: prometheus
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: otel-collector-config
+  namespace: prometheus
+  labels:
+    app: otel-collector
+data:
+  collector-config.yaml: |
+    receivers:
+      prometheus:
+        config:
+          scrape_configs:
+            - job_name: "custom-metrics"
+              scrape_interval: 15s
+              static_configs:
+                - targets:
+                    - "custom-metrics-producer.prometheus.svc.cluster.local:8080"
+    
+    processors:
+      metricstransform:
+        transforms:
+          - include: '(.*)'
+            match_type: regexp
+            action: update
+            new_name: 'otel_exporter_$1'
+      batch: {}
+      
+    exporters:
+      otlphttp:
+        endpoint: "http://metoro-exporter.metoro.svc.cluster.local/api/v1/custom/otel/metrics"
+        tls:
+          # Disable TLS for in-cluster communication
+          insecure: true
+        encoding: json
+
+    service:
+      pipelines:
+        metrics:
+          receivers: [prometheus]
+          processors: [metricstransform, batch]
+          exporters: [otlphttp]
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: otel-collector
+  namespace: prometheus
+  labels:
+    app: otel-collector
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: otel-collector
+  template:
+    metadata:
+      labels:
+        app: otel-collector
+    spec:
+      containers:
+        - name: otel-collector
+          # Important: use the *contrib* image if you need metricstransform
+          image: otel/opentelemetry-collector-contrib:0.118.0
+          args:
+            - "--config=/etc/otel-collector-config/collector-config.yaml"
+          volumeMounts:
+            - name: config
+              mountPath: /etc/otel-collector-config
+      volumes:
+        - name: config
+          configMap:
+            name: otel-collector-config
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: otel-collector
+  namespace: prometheus
+  labels:
+    app: otel-collector
+spec:
+  type: ClusterIP
+  selector:
+    app: otel-collector
+  ports:
+    - name: otlp-grpc
+      port: 4317
+      targetPort: 4317
+    - name: otlp-http
+      port: 4318
+      targetPort: 4318 

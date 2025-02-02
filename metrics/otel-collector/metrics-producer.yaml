@@ -1,0 +1,40 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  namespace: prometheus
+  name: custom-metrics-producer
+  labels:
+    app: custom-metrics-producer
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: custom-metrics-producer
+  template:
+    metadata:
+      labels:
+        app: custom-metrics-producer
+    spec:
+      containers:
+        - name: custom-metrics
+          image: quay.io/metoro/prometheus-custom-metric-producer:latest
+          ports:
+            - containerPort: 8080
+              name: http-metrics
+---
+apiVersion: v1
+kind: Service
+metadata:
+  namespace: prometheus
+  name: custom-metrics-producer
+  labels:
+    app: custom-metrics-producer
+spec:
+  type: ClusterIP
+  selector:
+    app: custom-metrics-producer
+  ports:
+    - name: http-metrics
+      port: 8080
+      targetPort: 8080 
