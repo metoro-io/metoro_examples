@@ -12,7 +12,6 @@ This example demonstrates how to send metrics to Metoro using Prometheus Remote 
 2. **Prometheus with Remote Write** (`prometheus-remote-write.yaml`)
    - Configured to scrape metrics from the sample application
    - Set up to send metrics to Metoro using Remote Write
-   - Includes all necessary Kubernetes resources (ConfigMap, Deployment, Service)
 
 ## Prerequisites
 
@@ -22,66 +21,9 @@ This example demonstrates how to send metrics to Metoro using Prometheus Remote 
 
 ## Installation
 
-1. Create the namespace and deploy the metrics producer:
+1. Create the namespace and deploy
 ```bash
-kubectl apply -f metrics-producer.yaml
+kubectl apply -f ./
 ```
 
-2. Deploy Prometheus with Remote Write configuration:
-```bash
-kubectl apply -f prometheus-remote-write.yaml
-```
-
-## Verification
-
-1. Check that all pods are running:
-```bash
-kubectl get pods -n prometheus
-```
-
-2. Verify Prometheus is scraping metrics:
-```bash
-kubectl port-forward -n prometheus svc/prometheus 9090:9090
-```
-Then visit `http://localhost:9090/targets` in your browser
-
-3. Check your Metoro dashboard for the incoming metrics
-
-## Configuration Details
-
-The Prometheus configuration includes:
-
-```yaml
-remote_write:
-  - url: "http://metoro-exporter.metoro.svc.cluster.local/api/v1/send/prometheus/remote_write"
-```
-
-This directs Prometheus to send all scraped metrics to the Metoro exporter using Remote Write.
-
-## Limitations
-
-- Some metric types (counters, histograms, summaries) may be converted to gauges due to limitations in the Remote Write protocol
-- No built-in support for metric transformation or filtering
-- Limited metadata preservation
-
-## Troubleshooting
-
-1. Check Prometheus logs:
-```bash
-kubectl logs -n prometheus deployment/prometheus
-```
-
-2. Verify network connectivity:
-```bash
-kubectl exec -n prometheus deploy/prometheus -- wget -q -O- http://metoro-exporter.metoro.svc.cluster.local/health
-```
-
-3. Common issues:
-   - Ensure the Metoro exporter service is running and accessible
-   - Check that the Remote Write URL is correct
-   - Verify that metrics are being scraped from the producer
-
-## Additional Resources
-
-- [Metoro Documentation](https://docs.metoro.io)
-- [Prometheus Remote Write Documentation](https://prometheus.io/docs/operating/integrations/#remote-endpoints-and-storage) 
+2. Check that the metrics are being exported to Metoro [here]([text](https://us-east.metoro.io/metric-explorer?chart=%7B%22startTime%22%3A1738455127%2C%22endTime%22%3A1738456027%2C%22metricSpecifiers%22%3A%5B%7B%22visualization%22%3A%7B%22displayName%22%3A%22Tcp+Connections%22%7D%2C%22metricName%22%3A%22jumpy_gauge%22%2C%22filters%22%3A%7B%22dataType%22%3A%22Map%22%2C%22value%22%3A%5B%5D%7D%2C%22excludeFilters%22%3A%7B%22dataType%22%3A%22Map%22%2C%22value%22%3A%5B%5D%7D%2C%22splits%22%3A%5B%5D%2C%22metricType%22%3A%22metric%22%2C%22functions%22%3A%5B%5D%2C%22aggregation%22%3A%22avg%22%2C%22bucketSize%22%3A0%7D%5D%2C%22type%22%3A%22line%22%7D&startEnd=)

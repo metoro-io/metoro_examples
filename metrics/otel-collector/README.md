@@ -34,47 +34,6 @@ kubectl apply -f ./
 2. Check that the metrics are being exported to Metoro [here](https://us-east.metoro.io/metric-explorer?chart=%7B%22startTime%22%3A1738455127%2C%22endTime%22%3A1738456027%2C%22metricSpecifiers%22%3A%5B%7B%22visualization%22%3A%7B%22displayName%22%3A%22Tcp+Connections%22%7D%2C%22metricName%22%3A%22otel_exporter_jumpy_gauge%22%2C%22filters%22%3A%7B%22dataType%22%3A%22Map%22%2C%22value%22%3A%5B%5D%7D%2C%22excludeFilters%22%3A%7B%22dataType%22%3A%22Map%22%2C%22value%22%3A%5B%5D%7D%2C%22splits%22%3A%5B%5D%2C%22metricType%22%3A%22metric%22%2C%22functions%22%3A%5B%5D%2C%22aggregation%22%3A%22avg%22%2C%22bucketSize%22%3A0%7D%5D%2C%22type%22%3A%22line%22%7D&startEnd=)
 
 
-
-
-## Configuration Details
-
-The collector configuration includes three main sections:
-
-1. **Receivers**
-```yaml
-receivers:
-  prometheus:
-    config:
-      scrape_configs:
-        - job_name: "custom-metrics"
-          scrape_interval: 15s
-          static_configs:
-            - targets:
-                - "custom-metrics-producer.prometheus.svc.cluster.local:8080"
-```
-
-2. **Processors**
-```yaml
-processors:
-  metricstransform:
-    transforms:
-      - include: '(.*)'
-        match_type: regexp
-        action: update
-        new_name: 'otel_exporter_$1'
-  batch: {}
-```
-
-3. **Exporters**
-```yaml
-exporters:
-  otlphttp:
-    endpoint: "http://metoro-exporter.metoro.svc.cluster.local/api/v1/custom/otel/metrics"
-    tls:
-      insecure: true
-    encoding: json
-```
-
 ## Advantages Over Remote Write
 
 1. **Better Type Preservation**

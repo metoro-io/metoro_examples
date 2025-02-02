@@ -8,29 +8,10 @@ This repository contains examples of how to send metrics to Metoro using differe
 
 Located in `prometheus-remote-write/`, this example shows how to configure Prometheus to send metrics directly to Metoro using Prometheus Remote Write protocol.
 
-Key files:
-- `metrics-producer.yaml`: A sample application that produces metrics
-- `prometheus-remote-write.yaml`: Prometheus configuration with remote write enabled
-
-To deploy:
-```bash
-kubectl apply -f prometheus-remote-write/metrics-producer.yaml
-kubectl apply -f prometheus-remote-write/prometheus-remote-write.yaml
-```
-
 ### 2. OpenTelemetry Collector (Recommended)
 
 Located in `otel-collector/`, this example demonstrates how to use the OpenTelemetry Collector to scrape Prometheus metrics and forward them to Metoro. This is the recommended approach as it better preserves metric type information.
 
-Key files:
-- `metrics-producer.yaml`: A sample application that produces metrics
-- `otel-collector.yaml`: OpenTelemetry Collector configuration that scrapes Prometheus and forwards to Metoro
-
-To deploy:
-```bash
-kubectl apply -f otel-collector/metrics-producer.yaml
-kubectl apply -f otel-collector/otel-collector.yaml
-```
 
 ## Why OpenTelemetry Collector?
 
@@ -45,35 +26,3 @@ While both methods work, we recommend using the OpenTelemetry Collector approach
 - A Kubernetes cluster
 - Metoro exporter installed in your cluster
 - kubectl configured to access your cluster
-
-## Getting Started
-
-1. Clone this repository:
-```bash
-git clone https://github.com/metoro-k8s/metoro_examples.git
-cd metoro_examples
-```
-
-2. Choose your preferred method (OpenTelemetry Collector or Prometheus Remote Write)
-
-3. Deploy the example:
-```bash
-# For OpenTelemetry Collector (recommended)
-kubectl apply -f otel-collector/
-
-# OR for Prometheus Remote Write
-kubectl apply -f prometheus-remote-write/
-```
-
-4. Verify that metrics are being received in your Metoro dashboard
-
-## Support
-
-If you encounter any issues or have questions, please:
-1. Check our [documentation](https://docs.metoro.io)
-2. Open an issue in this repository
-3. Contact our support team
-
-## License
-
-MIT License - See LICENSE file for details 
