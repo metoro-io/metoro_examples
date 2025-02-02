@@ -7,9 +7,14 @@ This example demonstrates how to use the OpenTelemetry Collector to scrape Prome
 1. **Metrics Producer** (`metrics-producer.yaml`)
    - A sample application that produces Prometheus metrics
    - Exposes metrics on port 8080
-   - Deployed as a Kubernetes service for the collector to scrape
+   - Deployed as a Kubernetes service for Prometheus to scrape
 
-2. **OpenTelemetry Collector** (`otel-collector.yaml`)
+2. **Prometheus** (from `../prometheus-remote-write/prometheus-remote-write.yaml`)
+   - Required to scrape and collect metrics from the producer
+   - The OpenTelemetry Collector will scrape metrics from this Prometheus instance
+   - Note: We'll use the same Prometheus configuration but without the remote_write section
+
+3. **OpenTelemetry Collector** (`otel-collector.yaml`)
    - Uses the OpenTelemetry Collector Contrib image for advanced features
    - Configured to scrape Prometheus metrics
    - Transforms metrics and forwards them to Metoro
@@ -28,7 +33,15 @@ This example demonstrates how to use the OpenTelemetry Collector to scrape Prome
 kubectl apply -f metrics-producer.yaml
 ```
 
-2. Deploy the OpenTelemetry Collector:
+2. Deploy Prometheus (using a modified version without remote_write):
+```bash
+# Copy and modify the Prometheus configuration
+cp ../prometheus-remote-write/prometheus-remote-write.yaml prometheus.yaml
+# Remove the remote_write section from prometheus.yaml
+kubectl apply -f prometheus.yaml
+```
+
+3. Deploy the OpenTelemetry Collector:
 ```bash
 kubectl apply -f otel-collector.yaml
 ```
@@ -93,12 +106,18 @@ exporters:
 kubectl get pods -n prometheus
 ```
 
-2. View collector logs:
+2. Verify Prometheus is scraping the metrics producer:
+```bash
+kubectl port-forward -n prometheus svc/prometheus 9090:9090
+```
+Then visit `http://localhost:9090/targets` in your browser
+
+3. View collector logs:
 ```bash
 kubectl logs -n prometheus deployment/otel-collector
 ```
 
-3. Check your Metoro dashboard for the incoming metrics
+4. Check your Metoro dashboard for the incoming metrics
 
 ## Troubleshooting
 
@@ -107,12 +126,18 @@ kubectl logs -n prometheus deployment/otel-collector
 kubectl logs -n prometheus deployment/otel-collector
 ```
 
-2. Verify scraping configuration:
+2. Check Prometheus logs:
+```bash
+kubectl logs -n prometheus deployment/prometheus
+```
+
+3. Verify scraping configuration:
 ```bash
 kubectl get configmap -n prometheus otel-collector-config -o yaml
 ```
 
-3. Common issues:
+4. Common issues:
+   - Ensure Prometheus is running and scraping metrics successfully
    - Ensure the collector has the correct permissions
    - Check that the metrics producer is accessible
    - Verify the Metoro exporter endpoint is correct
