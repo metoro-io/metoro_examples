@@ -1,0 +1,237 @@
+###############################################################################
+# 1) Namespace
+###############################################################################
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: vector
+
+---
+###############################################################################
+# 2) Vector ConfigMap
+###############################################################################
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: vector-config
+  namespace: vector
+data:
+  vector.yaml: |
+    sources:
+      generate_syslog:
+        type: demo_logs
+        format: syslog
+        count: 100000
+        interval: 1
+
+    sinks:
+      # Send logs as plain text lines to the OTel Collector over TCP port 1514
+      syslog_sink:
+        type: socket
+        inputs: ["generate_syslog"]
+        address: "otel-collector-svc.vector.svc.cluster.local:1514"
+        mode: "tcp"
+        encoding:
+          codec: "text"
+
+---
+###############################################################################
+# 3) Vector Deployment
+###############################################################################
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: vector
+  namespace: vector
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: vector
+  template:
+    metadata:
+      labels:
+        app: vector
+    spec:
+      serviceAccountName: vector
+      containers:
+        - name: vector
+          image: timberio/vector:latest-alpine
+          env:
+            - name: VECTOR_CONFIG
+              value: /etc/vector/vector.yaml
+            - name: VECTOR_LOG
+              value: "debug"
+          volumeMounts:
+            - name: config
+              mountPath: /etc/vector/
+              readOnly: true
+      volumes:
+        - name: config
+          configMap:
+            name: vector-config
+
+---
+###############################################################################
+# 4) OTel Collector ConfigMap
+###############################################################################
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: otel-collector-config
+  namespace: vector
+data:
+  otel-collector-config.yaml: |
+    receivers:
+      syslog:
+        tcp:
+          listen_address: 0.0.0.0:1514
+        protocol: rfc5424
+
+    processors:
+      batch:
+        timeout: 1s
+        send_batch_size: 512
+
+    exporters:
+      debug:
+        verbosity: detailed
+      otlphttp:
+        endpoint: "http://metoro-exporter.metoro.svc.cluster.local/api/v1/send/logs/otel"
+        logs_endpoint: "http://metoro-exporter.metoro.svc.cluster.local/api/v1/send/logs/otel"
+
+    service:
+      pipelines:
+        logs:
+          receivers: [syslog]
+          processors: [batch]
+          exporters: [otlphttp, debug]
+
+---
+###############################################################################
+# 5) OTel Collector Deployment
+###############################################################################
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: otel-collector
+  namespace: vector
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: otel-collector
+  template:
+    metadata:
+      labels:
+        app: otel-collector
+    spec:
+      serviceAccountName: vector-otel
+      containers:
+        - name: otel-collector
+          image: otel/opentelemetry-collector-contrib:latest
+          ports:
+            - containerPort: 1514
+              name: syslog
+          volumeMounts:
+            - name: otel-config
+              mountPath: /etc/otel-collector
+          command:
+            - "/otelcol-contrib"
+            - "--config=/etc/otel-collector/otel-collector-config.yaml"
+      volumes:
+        - name: otel-config
+          configMap:
+            name: otel-collector-config
+
+---
+###############################################################################
+# 6) OTel Collector Service
+###############################################################################
+apiVersion: v1
+kind: Service
+metadata:
+  name: otel-collector-svc
+  namespace: vector
+spec:
+  selector:
+    app: otel-collector
+  ports:
+    - name: syslog
+      port: 1514
+      targetPort: 1514
+      protocol: TCP
+
+---
+###############################################################################
+# 7) RBAC for Vector
+###############################################################################
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: vector
+  namespace: vector
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: vector
+rules:
+  - apiGroups: [""]
+    resources:
+      - pods
+      - namespaces
+      - nodes
+    verbs: ["list", "watch"]
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: vector
+subjects:
+  - kind: ServiceAccount
+    name: vector
+    namespace: vector
+roleRef:
+  kind: ClusterRole
+  name: vector
+  apiGroup: rbac.authorization.k8s.io
+
+---
+###############################################################################
+# 8) RBAC for OTel Collector
+###############################################################################
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: vector-otel
+  namespace: vector
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: vector-otel
+rules:
+  - apiGroups: [""]
+    resources:
+      - pods
+      - namespaces
+      - nodes
+    verbs: ["list", "watch"]
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: vector-otel
+subjects:
+  - kind: ServiceAccount
+    name: vector-otel
+    namespace: vector
+roleRef:
+  kind: ClusterRole
+  name: vector-otel
+  apiGroup: rbac.authorization.k8s.io 
