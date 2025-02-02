@@ -26,23 +26,15 @@ This example demonstrates how to use the OpenTelemetry Collector to scrape Prome
 
 ## Installation
 
-1. Create the namespace and deploy the metrics producer:
+1. Create the namespace and deploy
 ```bash
 kubectl apply -f ./
 ```
 
-2. Deploy Prometheus (using a modified version without remote_write):
-```bash
-# Copy and modify the Prometheus configuration
-cp ../prometheus-remote-write/prometheus-remote-write.yaml prometheus.yaml
-# Remove the remote_write section from prometheus.yaml
-kubectl apply -f prometheus.yaml
-```
+2. Check that the metrics are being exported to Metoro [here](https://us-east.metoro.io/metric-explorer?chart=%7B%22startTime%22%3A1738455127%2C%22endTime%22%3A1738456027%2C%22metricSpecifiers%22%3A%5B%7B%22visualization%22%3A%7B%22displayName%22%3A%22Tcp+Connections%22%7D%2C%22metricName%22%3A%22otel_exporter_jumpy_gauge%22%2C%22filters%22%3A%7B%22dataType%22%3A%22Map%22%2C%22value%22%3A%5B%5D%7D%2C%22excludeFilters%22%3A%7B%22dataType%22%3A%22Map%22%2C%22value%22%3A%5B%5D%7D%2C%22splits%22%3A%5B%5D%2C%22metricType%22%3A%22metric%22%2C%22functions%22%3A%5B%5D%2C%22aggregation%22%3A%22avg%22%2C%22bucketSize%22%3A0%7D%5D%2C%22type%22%3A%22line%22%7D&startEnd=)
 
-3. Deploy the OpenTelemetry Collector:
-```bash
-kubectl apply -f otel-collector.yaml
-```
+
+
 
 ## Configuration Details
 
@@ -82,8 +74,6 @@ exporters:
       insecure: true
     encoding: json
 ```
-
-Check that the metric is being exporter [here](https://us-east.metoro.io/metric-explorer?chart=%7B%22startTime%22%3A1738455127%2C%22endTime%22%3A1738456027%2C%22metricSpecifiers%22%3A%5B%7B%22visualization%22%3A%7B%22displayName%22%3A%22Tcp+Connections%22%7D%2C%22metricName%22%3A%22otel_exporter_jumpy_gauge%22%2C%22filters%22%3A%7B%22dataType%22%3A%22Map%22%2C%22value%22%3A%5B%5D%7D%2C%22excludeFilters%22%3A%7B%22dataType%22%3A%22Map%22%2C%22value%22%3A%5B%5D%7D%2C%22splits%22%3A%5B%5D%2C%22metricType%22%3A%22metric%22%2C%22functions%22%3A%5B%5D%2C%22aggregation%22%3A%22avg%22%2C%22bucketSize%22%3A0%7D%5D%2C%22type%22%3A%22line%22%7D&startEnd=)
 
 ## Advantages Over Remote Write
 
