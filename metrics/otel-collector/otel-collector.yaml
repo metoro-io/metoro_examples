@@ -20,12 +20,15 @@ data:
       prometheus:
         config:
           scrape_configs:
-            - job_name: "custom-metrics"
+            - job_name: 'prometheus-federate'
               scrape_interval: 15s
+              metrics_path: /federate
+              params:
+                match[]:
+                  - '{job=~".+"}'
               static_configs:
-                - targets:
-                    - "custom-metrics-producer.prometheus.svc.cluster.local:8080"
-    
+                - targets: ['prometheus.prometheus.svc.cluster.local:9090']
+        
     processors:
       metricstransform:
         transforms:
@@ -34,13 +37,14 @@ data:
             action: update
             new_name: 'otel_exporter_$1'
       batch: {}
-      
+
     exporters:
       otlphttp:
         endpoint: "http://metoro-exporter.metoro.svc.cluster.local/api/v1/custom/otel/metrics"
         tls:
-          # Disable TLS for in-cluster communication
+          # Insecure is only to the exporter in the same cluster, as data leaves the exporter it is encrypted
           insecure: true
+        metrics_endpoint: "http://metoro-exporter.metoro.svc.cluster.local/api/v1/custom/otel/metrics"
         encoding: json
 
     service:
