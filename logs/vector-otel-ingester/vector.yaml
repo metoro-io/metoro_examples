@@ -4,17 +4,15 @@
 apiVersion: v1
 kind: Namespace
 metadata:
-  name: vector
+  name: vector-otel-ingester
 
 ---
-###############################################################################
-# 2) Vector ConfigMap
-###############################################################################
+# ... existing code for Vector ConfigMap remains the same ...
 apiVersion: v1
 kind: ConfigMap
 metadata:
   name: vector-config
-  namespace: vector
+  namespace: vector-otel-ingester
 data:
   vector.yaml: |
     sources:
@@ -25,24 +23,21 @@ data:
         interval: 1
 
     sinks:
-      # Send logs as plain text lines to the OTel Collector over TCP port 1514
       syslog_sink:
         type: socket
         inputs: ["generate_syslog"]
-        address: "otel-collector-svc.vector.svc.cluster.local:1514"
+        address: "otel-collector-svc.vector-otel-ingester.svc.cluster.local:1514"
         mode: "tcp"
         encoding:
           codec: "text"
 
 ---
-###############################################################################
-# 3) Vector Deployment
-###############################################################################
+# ... existing deployment config with updated namespace ...
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: vector
-  namespace: vector
+  namespace: vector-otel-ingester
 spec:
   replicas: 1
   selector:
@@ -73,13 +68,13 @@ spec:
 
 ---
 ###############################################################################
-# 4) OTel Collector ConfigMap
+# 4) OTel Collector ConfigMap with Authorization Headers
 ###############################################################################
 apiVersion: v1
 kind: ConfigMap
 metadata:
   name: otel-collector-config
-  namespace: vector
+  namespace: vector-otel-ingester
 data:
   otel-collector-config.yaml: |
     receivers:
@@ -91,12 +86,15 @@ data:
     processors:
       batch:
         timeout: 1s
-        send_batch_size: 512
+        send_batch_size: 4096
 
     exporters:
+      debug: {}
       otlphttp:
-        endpoint: "http://metoro-exporter.metoro.svc.cluster.local/api/v1/send/logs/otel"
-        logs_endpoint: "http://metoro-exporter.metoro.svc.cluster.local/api/v1/send/logs/otel"
+        endpoint: "http://ingester.onprem4.svc.cluster.local/ingest/api/v1/otel/v1/logs"
+        logs_endpoint: "http://ingester.onprem4.svc.cluster.local/ingest/api/v1/otel/v1/logs"
+        headers:
+          Authorization: "Bearer ${BEARER_TOKEN}"
 
     service:
       pipelines:
@@ -107,13 +105,13 @@ data:
 
 ---
 ###############################################################################
-# 5) OTel Collector Deployment
+# 5) OTel Collector Deployment with Token Environment Variable
 ###############################################################################
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: otel-collector
-  namespace: vector
+  namespace: vector-otel-ingester
 spec:
   replicas: 1
   selector:
@@ -131,6 +129,12 @@ spec:
           ports:
             - containerPort: 1514
               name: syslog
+          env:
+            - name: BEARER_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: otel-auth-token
+                  key: token
           volumeMounts:
             - name: otel-config
               mountPath: /etc/otel-collector
@@ -150,7 +154,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: otel-collector-svc
-  namespace: vector
+  namespace: vector-otel-ingester
 spec:
   selector:
     app: otel-collector
@@ -168,13 +172,13 @@ apiVersion: v1
 kind: ServiceAccount
 metadata:
   name: vector
-  namespace: vector
+  namespace: vector-otel-ingester
 
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
-  name: vector
+  name: vector-otel-ingester
 rules:
   - apiGroups: [""]
     resources:
@@ -187,14 +191,14 @@ rules:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
-  name: vector
+  name: vector-otel-ingester
 subjects:
   - kind: ServiceAccount
     name: vector
-    namespace: vector
+    namespace: vector-otel-ingester
 roleRef:
   kind: ClusterRole
-  name: vector
+  name: vector-otel-ingester
   apiGroup: rbac.authorization.k8s.io
 
 ---
@@ -205,13 +209,13 @@ apiVersion: v1
 kind: ServiceAccount
 metadata:
   name: vector-otel
-  namespace: vector
+  namespace: vector-otel-ingester
 
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
-  name: vector-otel
+  name: vector-otel-ingester-collector
 rules:
   - apiGroups: [""]
     resources:
@@ -224,12 +228,25 @@ rules:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
-  name: vector-otel
+  name: vector-otel-ingester-collector
 subjects:
   - kind: ServiceAccount
     name: vector-otel
-    namespace: vector
+    namespace: vector-otel-ingester
 roleRef:
   kind: ClusterRole
-  name: vector-otel
-  apiGroup: rbac.authorization.k8s.io 
+  name: vector-otel-ingester-collector
+  apiGroup: rbac.authorization.k8s.io
+
+---
+###############################################################################
+# 9) Secret for Bearer Token
+###############################################################################
+apiVersion: v1
+kind: Secret
+metadata:
+  name: otel-auth-token
+  namespace: vector-otel-ingester
+type: Opaque
+data:
+  token: ZXlKaGJHY2lPaUpJVXpJMU5pSXNJblI1Y0NJNklrcFhWQ0o5LmV5SmpkWE4wYjIxbGNrbGtJam9pWkdWbVlYVnNkQzF2Ymkxd2NtVnRJaXdpWlc1MmFYSnZibTFsYm5RaU9pSmtaWFlpTENKbGVIQWlPakl3TlRVM05qSXpPVE45Lnp2OWpfSWhFb3FpRFBZcGhaRVdwMmJxb085MnBwWllybmVudjJ6TXJSOVk=
