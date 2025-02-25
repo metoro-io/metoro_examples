@@ -91,8 +91,8 @@ data:
     exporters:
       debug: {}
       otlphttp:
-        endpoint: "http://ingester.onprem4.svc.cluster.local/ingest/api/v1/otel/v1/logs"
-        logs_endpoint: "http://ingester.onprem4.svc.cluster.local/ingest/api/v1/otel/v1/logs"
+        endpoint: "http://ingester.CHANGE_ME.svc.cluster.local/ingest/api/v1/otel/v1/logs"
+        logs_endpoint: "http://ingester.CHANGE_ME.svc.cluster.local/ingest/api/v1/otel/v1/logs"
         headers:
           Authorization: "Bearer ${BEARER_TOKEN}"
 
@@ -248,5 +248,4 @@ metadata:
   name: otel-auth-token
   namespace: vector-otel-ingester
 type: Opaque
-data:
-  token: ZXlKaGJHY2lPaUpJVXpJMU5pSXNJblI1Y0NJNklrcFhWQ0o5LmV5SmpkWE4wYjIxbGNrbGtJam9pWkdWbVlYVnNkQzF2Ymkxd2NtVnRJaXdpWlc1MmFYSnZibTFsYm5RaU9pSmtaWFlpTENKbGVIQWlPakl3TlRVM05qSXpPVE45Lnp2OWpfSWhFb3FpRFBZcGhaRVdwMmJxb085MnBwWllybmVudjJ6TXJSOVk=
+data: CHANGE_ME
