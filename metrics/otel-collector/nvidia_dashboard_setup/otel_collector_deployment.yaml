@@ -1,0 +1,36 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nvidia-otel-collector
+  namespace: default
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: nvidia-otel-collector
+  template:
+    metadata:
+      labels:
+        app: nvidia-otel-collector
+    spec:
+      serviceAccountName: nvidia-otel-collector
+      containers:
+        - name: nvidia-otel-collector
+          image: "otel/opentelemetry-collector-contrib:0.118.0"
+          imagePullPolicy: IfNotPresent
+          args:
+            - "--config=/etc/otel-collector-config/collector-config.yaml"
+          resources:
+            limits:
+              cpu: 1000m
+              memory: 2Gi
+            requests:
+              cpu: 200m
+              memory: 400Mi
+          volumeMounts:
+            - name: config
+              mountPath: /etc/otel-collector-config
+      volumes:
+        - name: config
+          configMap:
+            name: nvidia-otel-collector-config

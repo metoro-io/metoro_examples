@@ -1,0 +1,52 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: nvidia-otel-collector-config
+  namespace: default
+  annotations:
+    meta.helm.sh/release-name: nvidia-collector
+data:
+  collector-config.yaml: |
+    receivers:
+      prometheus:
+        config:
+          scrape_configs:
+            - job_name: nvidia-dcgm-exporter
+              scrape_interval: 15s                 # change to suit your needs
+              metrics_path: /metrics               # dcgm-exporter’s path
+              kubernetes_sd_configs:
+                - role: pod
+                  namespaces:
+                    names: [default]          # <-- namespace where the pods run
+              relabel_configs:
+                # Only keep pods whose label app=nvidia-dcgm-exporter
+                - source_labels: [__meta_kubernetes_pod_label_app]
+                  action: keep
+                  regex: nvidia-dcgm-exporter
+                # Rewrite the address to "<podIP>:9400" (dcgm-exporter’s default port)
+                - source_labels: [__meta_kubernetes_pod_ip]
+                  target_label: __address__
+                  action: replace
+                  regex: (.*)
+                  replacement: $1:9400
+    processors:
+      batch: {}
+
+    exporters:
+      debug: {}
+      otlphttp:
+        endpoint: "http://metoro-exporter.metoro.svc.cluster.local/api/v1/custom/otel/metrics"
+        tls:
+          insecure: true
+        metrics_endpoint: "http://metoro-exporter.metoro.svc.cluster.local/api/v1/custom/otel/metrics"
+        encoding: json
+
+    service:
+      telemetry:
+        logs:
+          level: "debug"
+      pipelines:
+        metrics:
+          receivers: [prometheus]
+          processors: [batch]
+          exporters: [otlphttp, debug]

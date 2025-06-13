@@ -1,6 +1,9 @@
 # OpenTelemetry Collector Example
 
-This example demonstrates how to use the OpenTelemetry Collector to scrape Prometheus metrics and forward them to Metoro. This is the recommended approach as it better preserves metric type information and provides more flexibility in metric processing.
+This example demonstrates how to pull all metrics from a Prometheus instance using the OpenTelemetry Collector and forward them to Metoro.
+This approach is *not recommnded* for production use, instead it is better to use the OpenTelemetry Collector with the Prometheus receiver to scrape metrics directly from your applications and services.
+This is much more resource efficient and allows you to take advantage of the full capabilities of the OpenTelemetry Collector, such as metric transformation, filtering, and more.
+However this can be useful to quickly get started with Metoro if you already have a Prometheus instance running in your cluster.
 
 ## Components
 
