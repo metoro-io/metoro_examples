@@ -1,0 +1,256 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: dashboard-service-network
+  labels:
+    metoro.io/dashboard: "true"
+data:
+  dashboard.yaml: |
+    content:
+      title: Service Network Overview
+      variables:
+      - defaultValue: '*'
+        name: environment
+        overridable: true
+        selector:
+          dynamic:
+            attributeKey: environment
+            selectorQueries:
+            - avg(container_resources_cpu_usage_seconds_total)
+      - defaultValue: '*'
+        name: service_name
+        overridable: true
+        selector:
+          dynamic:
+            attributeKey: service_name
+            selectorQueries:
+            - avg(container_resources_cpu_usage_seconds_total)
+      - defaultValue: '*'
+        name: pod_name
+        overridable: true
+        selector:
+          dynamic:
+            attributeKey: pod_name
+            selectorQueries:
+            - avg(container_resources_cpu_usage_seconds_total)
+      widgets:
+      - markdown:
+          content: |-
+            ### Network Usage - Bytes Sent
+            This template serves as a starting point to look into network usage across your containers. Adapt this to your own needs!
+    
+    
+            Network Usage - Bytes Sent - This shows the bytes/second sent out of application containers. This is suitable to look at anything not in kube-system or running in privileged mode
+        position:
+          absolute:
+            h: 3
+            w: 3
+            x: 0
+            y: 0
+          type: absolute
+        type: markdown
+      - chart:
+          chartType: bar
+          expression:
+            metoroQLQueries:
+            - displaySettings:
+                label: Total Bytes Sent
+              query: sum(rate(container_net_bytes_sent_total{service_name="$service_name",
+                environment="$environment", pod_name="$pod_name"}))
+          title: Total Service Network Usage - Bytes Sent
+        position:
+          absolute:
+            h: 3
+            w: 3
+            x: 3
+            y: 0
+          type: absolute
+        type: chart
+      - chart:
+          chartType: line
+          expression:
+            metoroQLQueries:
+            - displaySettings:
+                label: Max Pod Bytes Sent
+              query: max(rate(container_net_bytes_sent_total{environment="$environment",
+                pod_name="$pod_name", service_name="$service_name"}))
+            - displaySettings:
+                label: Avg Pod Bytes Sent
+              query: avg(rate(container_net_bytes_sent_total{service_name="$service_name",
+                environment="$environment", pod_name="$pod_name"}))
+            - displaySettings:
+                label: Min Pod Bytes Sent
+              query: min(rate(container_net_bytes_sent_total{service_name="$service_name",
+                environment="$environment", pod_name="$pod_name"}))
+          title: Service Network Usage - Bytes Sent - Aggregates
+        position:
+          absolute:
+            h: 3
+            w: 3
+            x: 6
+            y: 0
+          type: absolute
+        type: chart
+      - chart:
+          chartType: line
+          expression:
+            metoroQLQueries:
+            - displaySettings:
+                label: Max Pod Bytes Sent
+              query: max(rate(container_net_bytes_sent_total{service_name="$service_name",
+                environment="$environment", pod_name="$pod_name"})) by (pod_name)
+          title: Service Network Usage - Bytes Sent - Top Pods
+        position:
+          absolute:
+            h: 3
+            w: 3
+            x: 9
+            y: 0
+          type: absolute
+        type: chart
+      - markdown:
+          content: "### Network Usage - Bytes Sent \n\nThis shows the bytes/second sent
+            out of application containers. This is suitable to look at anything not in
+            kube-system or running in privileged mode\n"
+        position:
+          absolute:
+            h: 3
+            w: 3
+            x: 0
+            y: 3
+          type: absolute
+        type: markdown
+      - chart:
+          chartType: bar
+          expression:
+            metoroQLQueries:
+            - displaySettings:
+                label: Total Bytes Sent
+              query: sum(rate(container_net_bytes_received_total{service_name="$service_name",
+                pod_name="$pod_name", environment="$environment"}))
+          title: Total Service Network Usage - Bytes Received
+        position:
+          absolute:
+            h: 3
+            w: 3
+            x: 3
+            y: 3
+          type: absolute
+        type: chart
+      - chart:
+          chartType: line
+          expression:
+            metoroQLQueries:
+            - displaySettings:
+                label: Max Pod Bytes Received
+              query: max(rate(container_net_bytes_received_total{service_name="$service_name",
+                environment="$environment", pod_name="$pod_name"}))
+            - displaySettings:
+                label: Avg Pod Bytes Received
+              query: avg(rate(container_net_bytes_received_total{environment="$environment",
+                pod_name="$pod_name", service_name="$service_name"}))
+            - displaySettings:
+                label: Min Pod Bytes Received
+              query: min(rate(container_net_bytes_received_total{service_name="$service_name",
+                environment="$environment", pod_name="$pod_name"}))
+          title: Service Network Usage - Bytes Received - Aggregates
+        position:
+          absolute:
+            h: 3
+            w: 3
+            x: 6
+            y: 3
+          type: absolute
+        type: chart
+      - chart:
+          chartType: line
+          expression:
+            metoroQLQueries:
+            - displaySettings:
+                label: Max Pod Bytes Sent
+              query: max(rate(container_net_bytes_received_total{service_name="$service_name",
+                environment="$environment", pod_name="$pod_name"})) by (pod_name)
+          title: Service Network Usage - Bytes Received - Top Pods
+        position:
+          absolute:
+            h: 3
+            w: 3
+            x: 9
+            y: 3
+          type: absolute
+        type: chart
+      - markdown:
+          content: |
+            ### Service TCP Connections Opened Per Second
+            This shows the bytes/second sent out of application containers. This is suitable to look at anything not in kube-system or running in privileged mode
+        position:
+          absolute:
+            h: 3
+            w: 3
+            x: 0
+            y: 6
+          type: absolute
+        type: markdown
+      - chart:
+          chartType: line
+          expression:
+            metoroQLQueries:
+            - displaySettings:
+                label: Max TCP Connections Opened Per Second
+              query: sum(rate(container_net_tcp_successful_connects_total{pod_name="$pod_name",
+                service_name="$service_name", environment="$environment"}))
+          title: Service TCP Connections Opened Per Second
+        position:
+          absolute:
+            h: 3
+            w: 3
+            x: 3
+            y: 6
+          type: absolute
+        type: chart
+      - chart:
+          chartType: line
+          expression:
+            metoroQLQueries:
+            - displaySettings:
+                label: Max TCP Connections Opened Per Second
+              query: max(container_net_tcp_successful_connects_total{service_name="$service_name",
+                environment="$environment", pod_name="$pod_name"})
+            - displaySettings:
+                label: Avg TCP Connections Opened Per Second
+              query: avg(container_net_tcp_successful_connects_total{service_name="$service_name",
+                environment="$environment", pod_name="$pod_name"})
+            - displaySettings:
+                label: Min TCP Connections Opened Per Second
+              query: min(container_net_tcp_successful_connects_total{service_name="$service_name",
+                environment="$environment", pod_name="$pod_name"})
+          title: Service TCP Connections Opened Per Second - Aggregates
+        position:
+          absolute:
+            h: 3
+            w: 3
+            x: 6
+            y: 6
+          type: absolute
+        type: chart
+      - chart:
+          chartType: line
+          expression:
+            metoroQLQueries:
+            - displaySettings:
+                label: Max Pod Bytes Sent
+              query: max(rate(container_net_tcp_successful_connects_total{service_name="$service_name",
+                environment="$environment", pod_name="$pod_name"})) by (pod_name)
+          title: Service TCP Connections Opened Per Second - Top Pods
+        position:
+          absolute:
+            h: 3
+            w: 3
+            x: 9
+            y: 6
+          type: absolute
+        type: chart
+    metadata:
+      id: service-network-1
+      title: Service Network Overview
+    

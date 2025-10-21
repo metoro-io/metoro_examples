@@ -1,0 +1,33 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: dashboard-settings-example
+  labels:
+    metoro.io/dashboard: "true"
+data:
+  dashboard.yaml: |
+    content:
+      title: Global Settings example
+      widgets:
+      - chart:
+          chartType: line
+          expression:
+            metoroQLQueries:
+            - query: avg(container_net_tcp_active_connections)
+          title: New Chart
+        position:
+          absolute:
+            h: 2
+            w: 6
+            x: 0
+            y: 0
+          type: absolute
+        type: chart
+    metadata:
+      id: global-settings-example-1
+      title: Global Settings example
+      folderPath: /dashboards/examples/
+    settings:
+      defaultTimeRange: 1h
+      hideGlobalEnvironmentSelector: true
+    

@@ -1,0 +1,221 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: dashboard-service-memory
+  labels:
+    metoro.io/dashboard: "true"
+data:
+  dashboard.yaml: |
+    content:
+      title: Service Memory Overview
+      variables:
+      - defaultValue: '*'
+        name: environment
+        overridable: true
+        selector:
+          dynamic:
+            attributeKey: environment
+            selectorQueries:
+            - avg(container_resources_cpu_usage_seconds_total)
+      - defaultValue: '*'
+        name: service_name
+        overridable: true
+        selector:
+          dynamic:
+            attributeKey: service_name
+            selectorQueries:
+            - avg(container_resources_cpu_usage_seconds_total)
+      - defaultValue: '*'
+        name: pod_name
+        overridable: true
+        selector:
+          dynamic:
+            attributeKey: pod_name
+            selectorQueries:
+            - avg(container_resources_cpu_usage_seconds_total)
+      widgets:
+      - markdown:
+          content: |-
+            ### Memory Usage
+            This template serves as a starting point to look into memory usage across your containers. Adapt this to your own needs!
+    
+    
+            Memory Usage - This shows the number of cores used across the service, the aggregates across pods in the service and the pods themselves
+        position:
+          absolute:
+            h: 3
+            w: 3
+            x: 0
+            y: 0
+          type: absolute
+        type: markdown
+      - chart:
+          chartType: line
+          expression:
+            metoroQLQueries:
+            - displaySettings:
+                label: Total Memory Usage
+                lineSettings:
+                  lineColour: '#4bc0c0'
+                  lineDotColor: '#4bc0c033'
+                  lineType: solid
+              query: sum(container_resources_memory_rss_bytes{pod_name="$pod_name", environment="$environment",
+                service_name="$service_name"})
+            - displaySettings:
+                label: Memory Limit
+                lineSettings:
+                  lineColour: '#ff6384'
+                  lineDotColor: '#ff638400'
+                  lineDotSize: 0
+                  lineType: dash
+              query: sum(container_resources_memory_limit_bytes{environment="$environment",
+                service_name="$service_name", pod_name="$pod_name"})
+          title: Total Service Memory Usage
+        position:
+          absolute:
+            h: 3
+            w: 3
+            x: 3
+            y: 0
+          type: absolute
+        type: chart
+      - chart:
+          chartType: line
+          expression:
+            metoroQLQueries:
+            - displaySettings:
+                label: Min Pod Memory Usage
+                lineSettings:
+                  lineColour: '#4bc0c0'
+                  lineDotColor: '#4bc0c033'
+                  lineType: solid
+              query: min(container_resources_memory_rss_bytes{service_name="$service_name",
+                pod_name="$pod_name", environment="$environment"})
+            - displaySettings:
+                label: Max Pod Memory Usage
+                lineSettings:
+                  lineColour: '#3793ff'
+                  lineDotColor: '#3793ff33'
+                  lineType: solid
+              query: max(container_resources_memory_rss_bytes{environment="$environment",
+                service_name="$service_name", pod_name="$pod_name"})
+            - displaySettings:
+                label: Avg Pod Memory Usage
+                lineSettings:
+                  lineColour: '#ffce56'
+                  lineDotColor: '#ffce5633'
+                  lineType: solid
+              query: avg(container_resources_memory_rss_bytes{service_name="$service_name",
+                pod_name="$pod_name", environment="$environment"})
+            - displaySettings:
+                label: Memory Limit
+                lineSettings:
+                  lineColour: '#ff6384'
+                  lineDotColor: '#ff638400'
+                  lineDotSize: 0
+                  lineType: dash
+              query: max(container_resources_memory_limit_bytes{service_name="$service_name",
+                environment="$environment", pod_name="$pod_name"})
+          title: Service Memory Usage - Aggregates
+        position:
+          absolute:
+            h: 3
+            w: 3
+            x: 6
+            y: 0
+          type: absolute
+        type: chart
+      - chart:
+          chartType: line
+          expression:
+            metoroQLQueries:
+            - displaySettings:
+                label: CPU Limit
+                lineSettings:
+                  lineColour: '#ff6384'
+                  lineDotColor: '#ff638400'
+                  lineDotSize: 0
+                  lineType: dash
+              query: max(container_resources_memory_limit_bytes{service_name="$service_name",
+                environment="$environment", pod_name="$pod_name"})
+            - displaySettings:
+                label: CPU Usage
+              query: max(container_resources_memory_rss_bytes{environment="$environment",
+                pod_name="$pod_name", service_name="$service_name"}) by (pod_name)
+          title: Service Memory Usage - Top pods
+        position:
+          absolute:
+            h: 3
+            w: 3
+            x: 9
+            y: 0
+          type: absolute
+        type: chart
+      - markdown:
+          content: |-
+            ### OOM Kills
+            There are several reasons why the OOM killer mechanism might terminate a process:
+    
+            - If a container has reached its memory limit.
+            - If a top-level cgroup has reached its memory limit. For example, Kubernetes limits the kubepods cgroup to the size of allocatable memory on the node, so a container can be killed even if it has no memory limit.
+            - If a node has run out of memory.
+        position:
+          absolute:
+            h: 3
+            w: 3
+            x: 0
+            y: 3
+          type: absolute
+        type: markdown
+      - chart:
+          chartType: bar
+          expression:
+            metoroQLQueries:
+            - displaySettings: {}
+              query: sum(container_oom_kills_total{service_name="$service_name", pod_name="$pod_name",
+                environment="$environment"})
+          title: Total Service OOM Kills
+        position:
+          absolute:
+            h: 3
+            w: 3
+            x: 3
+            y: 3
+          type: absolute
+        type: chart
+      - chart:
+          chartType: bar
+          expression:
+            metoroQLQueries:
+            - displaySettings: {}
+              query: sum(container_oom_kills_total{environment="$environment", service_name="$service_name",
+                pod_name="$pod_name"}) by (pod_name)
+          title: Top OOM Kills by Pod
+        position:
+          absolute:
+            h: 3
+            w: 3
+            x: 6
+            y: 3
+          type: absolute
+        type: chart
+      - chart:
+          chartType: bar
+          expression:
+            metoroQLQueries:
+            - displaySettings: {}
+              query: sum(container_oom_kills_total{service_name="$service_name", pod_name="$pod_name",
+                environment="$environment"}) by (node.label.kubernetes.io/hostname)
+          title: Top OOM Kills by Node
+        position:
+          absolute:
+            h: 3
+            w: 3
+            x: 9
+            y: 3
+          type: absolute
+        type: chart
+    metadata:
+      id: service-memory-1
+      title: Service Memory Overview
+    

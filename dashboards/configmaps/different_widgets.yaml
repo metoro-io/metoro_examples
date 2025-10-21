@@ -1,0 +1,124 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: dashboard-different-widgets
+  labels:
+    metoro.io/dashboard: "true"
+data:
+  dashboard.yaml: |
+    content:
+      title: Different Dashboard Widget examples
+      widgets:
+      - chart:
+          chartType: line
+          expression:
+            metoroQLQueries:
+            - query: avg(container_net_tcp_active_connections)
+          title: New Chart
+        position:
+          absolute:
+            h: 2
+            w: 6
+            x: 0
+            y: 0
+          type: absolute
+        type: chart
+      - position:
+          absolute:
+            h: 2
+            w: 3
+            x: 6
+            y: 0
+          type: absolute
+        stat:
+          displaySettings:
+            globalSettings:
+              valuePrecision: 2
+            valueSettings:
+            - colorSettings:
+                color: '#d92e48'
+                type: text
+              formatSpecifier: $value cores used
+              matchingOperators:
+              - operator: greaterThan
+                threshold: 5
+            - colorSettings:
+                color: '#2DD881'
+                type: text
+              formatSpecifier: $value cores used
+              matchingOperators:
+              - operator: lessThan
+                threshold: 5
+          expression:
+            metoroQLQuery:
+              bucketSize: 60
+              query: sum(rate(node_resources_cpu_usage_seconds_total))
+            reduceAggregation: max
+        type: stat
+      - gauge:
+          displaySettings:
+            globalSettings:
+              label: CPU Usage
+              max: 100
+              min: 0
+          expression:
+            metoroQLQuery:
+              bucketSize: 60
+              query: sum(rate(node_resources_cpu_usage_seconds_total))
+            reduceAggregation: ""
+        position:
+          absolute:
+            h: 2
+            w: 3
+            x: 9
+            y: 0
+          type: absolute
+        type: gauge
+      - log:
+          displaySettings:
+            columns:
+            - service.name
+            - time
+            hideSearchBar: false
+          expression:
+            metoroQLQuery:
+              bucketSize: 60
+              query: count(logs{log_level="error"})
+          title: ""
+        position:
+          absolute:
+            h: 5
+            w: 6
+            x: 0
+            y: 2
+          type: absolute
+        type: log
+      - position:
+          absolute:
+            h: 5
+            w: 6
+            x: 6
+            y: 2
+          type: absolute
+        trace:
+          displaySettings:
+            columns:
+            - time
+            - traceId
+            - client.service.name
+            - server.service.name
+            - status
+            - method
+            - endpoint
+            - latency
+            hideSearchBar: false
+          expression:
+            metoroQLQuery:
+              bucketSize: 60
+              query: count(traces{http.status_code.bucket="5XX"})
+          title: ""
+        type: trace
+    metadata:
+      id: different-widgets-1
+      title: Different Dashboard Widget examples
+    

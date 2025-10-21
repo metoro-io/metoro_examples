@@ -1,0 +1,609 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: dashboard-karpenter-overview
+  labels:
+    metoro.io/dashboard: "true"
+data:
+  dashboard.yaml: |
+    content:
+      title: Karpenter
+      variables:
+      - defaultValue: '*'
+        name: nodepool
+        overridable: true
+        selector:
+          dynamic:
+            attributeKey: nodepool
+            selectorQueries:
+            - avg(karpenter_nodes_allocatable)
+      - defaultValue: .*
+        name: application
+        overridable: true
+        selector:
+          dynamic:
+            attributeKey: owner
+            selectorQueries:
+            - avg(karpenter_pods_state)
+      widgets:
+      - group:
+          title: Summary
+          widgets:
+          - markdown:
+              content: |
+                #### Karpenter Metrics
+    
+                Karpenter metrics are documented [here](https://karpenter.sh/docs/reference/metrics/). This dashboard relies on metrics introduced in Karpenter v1.5; depending on your installed version, some metrics may be unavailable.
+            position:
+              absolute:
+                h: 2
+                w: 3
+                x: 0
+                y: 0
+              type: absolute
+            type: markdown
+          - position:
+              absolute:
+                h: 1
+                w: 3
+                x: 3
+                y: 0
+              type: absolute
+            stat:
+              displaySettings:
+                columnSettings:
+                - column: value
+                  hiddenByDefault: true
+                  title: value
+                globalSettings:
+                  fontSize: auto
+                  unitOverride: '%'
+                  valuePrecision: 0
+                valueSettings:
+                - colorSettings:
+                    color: '#2196F3'
+                    type: text
+                  matchingOperators:
+                  - operator: greaterThanOrEqual
+                    threshold: 0
+              expression:
+                metoroQLQuery:
+                  query: (max(karpenter_nodepools_usage{nodepool="$nodepool", resource_type="cpu"}))
+                    / (max(karpenter_nodepools_limit{nodepool="$nodepool", resource_type="cpu"}))
+                    * 100
+                reduceAggregation: avg
+              title: Nodepool CPU % Limits
+            type: stat
+          - position:
+              absolute:
+                h: 1
+                w: 3
+                x: 6
+                y: 0
+              type: absolute
+            stat:
+              displaySettings:
+                columnSettings:
+                - column: value
+                  hiddenByDefault: true
+                  title: value
+                globalSettings:
+                  fontSize: auto
+                  unitOverride: cores
+                  valuePrecision: 0
+                valueSettings:
+                - colorSettings:
+                    color: '#2196F3'
+                    type: text
+                  matchingOperators:
+                  - operator: greaterThanOrEqual
+                    threshold: 0
+              expression:
+                metoroQLQuery:
+                  query: (sum(karpenter_nodes_total_pod_requests{nodepool="$nodepool",
+                    resource_type="cpu"}))
+                reduceAggregation: avg
+              title: Cluster CPU Requested
+            type: stat
+          - position:
+              absolute:
+                h: 1
+                w: 3
+                x: 9
+                y: 0
+              type: absolute
+            stat:
+              displaySettings:
+                columnSettings:
+                - column: value
+                  hiddenByDefault: true
+                  title: value
+                globalSettings:
+                  fontSize: auto
+                  unitOverride: cores
+                  valuePrecision: 0
+                valueSettings:
+                - colorSettings:
+                    color: '#2196F3'
+                    type: text
+                  matchingOperators:
+                  - operator: greaterThanOrEqual
+                    threshold: 0
+              expression:
+                metoroQLQuery:
+                  query: |
+                    sum(karpenter_nodes_allocatable{resource_type="cpu", nodepool="$nodepool"})
+                reduceAggregation: avg
+              title: Allocatable CPU
+            type: stat
+          - position:
+              absolute:
+                h: 1
+                w: 3
+                x: 3
+                y: 1
+              type: absolute
+            stat:
+              displaySettings:
+                columnSettings:
+                - column: value
+                  hiddenByDefault: true
+                  title: value
+                globalSettings:
+                  fontSize: auto
+                  unitOverride: '%'
+                  valuePrecision: 0
+                valueSettings:
+                - colorSettings:
+                    color: '#9C27B0'
+                    type: text
+                  matchingOperators:
+                  - operator: greaterThanOrEqual
+                    threshold: 0
+              expression:
+                metoroQLQuery:
+                  query: (max(karpenter_nodepools_usage{nodepool="$nodepool", resource_type="memory"}))
+                    / (max(karpenter_nodepools_limit{nodepool="$nodepool", resource_type="memory"}))
+                    * 100
+                reduceAggregation: avg
+              title: Nodepool Memory % Limits
+            type: stat
+          - position:
+              absolute:
+                h: 1
+                w: 3
+                x: 6
+                y: 1
+              type: absolute
+            stat:
+              displaySettings:
+                columnSettings:
+                - column: value
+                  hiddenByDefault: true
+                  title: value
+                globalSettings:
+                  fontSize: auto
+                  unitOverride: By
+                  valuePrecision: 0
+                valueSettings:
+                - colorSettings:
+                    color: '#9C27B0'
+                    type: text
+                  matchingOperators:
+                  - operator: greaterThanOrEqual
+                    threshold: 0
+              expression:
+                metoroQLQuery:
+                  query: '(sum(karpenter_nodes_total_pod_requests{resource_type="memory",
+                    nodepool="$nodepool"})) '
+                reduceAggregation: avg
+              title: Cluster Memory Requested
+            type: stat
+          - position:
+              absolute:
+                h: 1
+                w: 3
+                x: 9
+                y: 1
+              type: absolute
+            stat:
+              displaySettings:
+                columnSettings:
+                - column: value
+                  hiddenByDefault: true
+                  title: value
+                globalSettings:
+                  fontSize: auto
+                  unitOverride: By
+                  valuePrecision: 0
+                valueSettings:
+                - colorSettings:
+                    color: '#9C27B0'
+                    type: text
+                  matchingOperators:
+                  - operator: greaterThanOrEqual
+                    threshold: 0
+              expression:
+                metoroQLQuery:
+                  query: '(sum(karpenter_nodes_allocatable{resource_type="memory", nodepool="$nodepool"})) '
+                reduceAggregation: avg
+              title: Allocatable Memory
+            type: stat
+          - chart:
+              chartType: area
+              expression:
+                metoroQLQueries:
+                - displaySettings:
+                    unitOverride: Nodes
+                  query: count(karpenter_nodes_total_pod_requests{resource_type="pods",
+                    nodepool="$nodepool"}) by (zone)
+              title: Node AZ Distribution
+            position:
+              absolute:
+                h: 2
+                w: 4
+                x: 0
+                y: 2
+              type: absolute
+            type: chart
+          - chart:
+              chartType: area
+              expression:
+                metoroQLQueries:
+                - displaySettings:
+                    unitOverride: Pods
+                  query: sum(karpenter_pods_state{nodepool="$nodepool"}) by (zone)
+              title: Pod AZ Distribution
+            position:
+              absolute:
+                h: 2
+                w: 4
+                x: 4
+                y: 2
+              type: absolute
+            type: chart
+          - position:
+              absolute:
+                h: 2
+                w: 4
+                x: 8
+                y: 2
+              type: absolute
+            stat:
+              displaySettings:
+                columnSettings:
+                - column: value
+                  hiddenByDefault: true
+                  title: value
+                globalSettings:
+                  fontSize: auto
+                  valuePrecision: 0
+                valueSettings:
+                - colorSettings:
+                    color: '#FFFFFF'
+                    type: text
+                  matchingOperators:
+                  - operator: greaterThanOrEqual
+                    threshold: 0
+              expression:
+                metoroQLQuery:
+                  query: sum(karpenter_pods_state{nodepool="$nodepool"})
+                reduceAggregation: lastNotNull
+              title: Total number of pods
+            type: stat
+        position:
+          absolute:
+            h: 5
+            w: 12
+            x: 0
+            y: 0
+          type: absolute
+        type: group
+      - group:
+          title: Cluster
+          widgets:
+          - position:
+              absolute:
+                h: 2
+                w: 2
+                x: 0
+                y: 0
+              type: absolute
+            stat:
+              displaySettings:
+                globalSettings:
+                  fontSize: auto
+                  unitOverride: '% CPU Allocated'
+                  valuePrecision: 2
+                valueSettings:
+                - colorSettings:
+                    color: '#2196F3'
+                    type: text
+                  matchingOperators:
+                  - operator: greaterThan
+                    threshold: 0
+              expression:
+                metoroQLQuery:
+                  bucketSize: 60
+                  query: (sum(karpenter_nodes_total_pod_requests{nodepool="$nodepool",
+                    resource_type="cpu"})) / sum(karpenter_nodes_allocatable{resource_type="cpu",
+                    nodepool="$nodepool"}) * 100
+                reduceAggregation: avg
+              title: ""
+            type: stat
+          - chart:
+              chartType: line
+              expression:
+                metoroQLQueries:
+                - displaySettings:
+                    label: Allocated
+                  query: (sum(karpenter_nodes_total_pod_requests{nodepool="$nodepool",
+                    resource_type="cpu"}))
+                - displaySettings:
+                    label: Allocatable
+                  query: sum(karpenter_nodes_allocatable{resource_type="cpu", nodepool="$nodepool"})
+                - displaySettings:
+                    label: Allocatable Limits
+                  query: max(karpenter_nodepools_limit{nodepool="$nodepool", resource_type="cpu"})
+              title: Cluster CPU
+            position:
+              absolute:
+                h: 2
+                w: 4
+                x: 2
+                y: 0
+              type: absolute
+            type: chart
+          - position:
+              absolute:
+                h: 2
+                w: 2
+                x: 6
+                y: 0
+              type: absolute
+            stat:
+              displaySettings:
+                globalSettings:
+                  fontSize: auto
+                  unitOverride: '% Memory Allocated'
+                  valuePrecision: 2
+                valueSettings:
+                - colorSettings:
+                    color: '#1f99fc'
+                    type: text
+                  matchingOperators:
+                  - operator: greaterThan
+                    threshold: 0
+              expression:
+                metoroQLQuery:
+                  bucketSize: 60
+                  query: (sum(karpenter_nodes_total_pod_requests{nodepool="$nodepool",
+                    resource_type="memory"})) / sum(karpenter_nodes_allocatable{nodepool="$nodepool",
+                    resource_type="memory"}) * 100
+                reduceAggregation: avg
+              title: ""
+            type: stat
+          - chart:
+              chartType: line
+              expression:
+                metoroQLQueries:
+                - displaySettings:
+                    label: Allocated
+                    lineSettings:
+                      lineDotSize: 3
+                      lineType: solid
+                  query: (sum(karpenter_nodes_total_pod_requests{nodepool="$nodepool",
+                    resource_type="memory"}))
+                - displaySettings:
+                    label: Allocatable
+                    lineSettings:
+                      lineDotSize: 3
+                      lineType: solid
+                  query: sum(karpenter_nodes_allocatable{nodepool="$nodepool", resource_type="memory"})
+                - displaySettings:
+                    label: Allocatable Limits
+                    lineSettings:
+                      lineDotSize: 3
+                      lineType: solid
+                  query: max(karpenter_nodepools_limit{nodepool="$nodepool", resource_type="memory"})
+              title: Cluster Memory
+            position:
+              absolute:
+                h: 2
+                w: 4
+                x: 8
+                y: 0
+              type: absolute
+            type: chart
+        position:
+          absolute:
+            h: 3
+            w: 12
+            x: 0
+            y: 5
+          type: absolute
+        type: group
+      - group:
+          title: Nodes
+          widgets:
+          - chart:
+              chartType: bar
+              expression:
+                metoroQLQueries:
+                - bucketSize: 60
+                  displaySettings: {}
+                  query: sum(karpenter_nodes_created_total{nodepool="$nodepool"})
+              title: Nodes Created
+            position:
+              absolute:
+                h: 2
+                w: 6
+                x: 0
+                y: 0
+              type: absolute
+            type: chart
+          - chart:
+              chartType: area
+              expression:
+                metoroQLQueries:
+                - displaySettings:
+                    unitOverride: Nodes
+                  query: count(karpenter_nodes_total_pod_requests{nodepool="$nodepool",
+                    resource_type="pods"}) by (zone)
+              title: Node AZ Distribution
+            position:
+              absolute:
+                h: 2
+                w: 6
+                x: 6
+                y: 0
+              type: absolute
+            type: chart
+          - chart:
+              chartType: line
+              expression:
+                metoroQLQueries:
+                - displaySettings:
+                    unitOverride: '%'
+                  query: (sum(karpenter_nodes_total_pod_requests{resource_type="cpu",
+                    nodepool="$nodepool"}))  / (sum(karpenter_nodes_allocatable{nodepool="$nodepool",
+                    resource_type="cpu"})) * 100
+              title: Node CPU % Allocated
+            position:
+              absolute:
+                h: 2
+                w: 6
+                x: 0
+                y: 2
+              type: absolute
+            type: chart
+          - chart:
+              chartType: line
+              expression:
+                metoroQLQueries:
+                - displaySettings:
+                    unitOverride: '%'
+                  query: (sum(karpenter_nodes_total_pod_requests{nodepool="$nodepool",
+                    resource_type="memory"})) / (sum(karpenter_nodes_allocatable{nodepool="$nodepool",
+                    resource_type="memory"})) * 100
+              title: Node Memory % Allocated
+            position:
+              absolute:
+                h: 2
+                w: 6
+                x: 6
+                y: 2
+              type: absolute
+            type: chart
+          - chart:
+              chartType: bar
+              expression:
+                metoroQLQueries:
+                - bucketSize: 60
+                  displaySettings:
+                    unitOverride: Messages
+                  query: sum(karpenter_interruption_received_messages_total)
+              title: Interruption Messages
+            position:
+              absolute:
+                h: 2
+                w: 6
+                x: 0
+                y: 4
+              type: absolute
+            type: chart
+          - chart:
+              chartType: bar
+              expression:
+                metoroQLQueries:
+                - bucketSize: 60
+                  displaySettings:
+                    unitOverride: Messages
+                  query: sum(karpenter_interruption_deleted_messages_total)
+              title: Deleted Interruption Messages
+            position:
+              absolute:
+                h: 2
+                w: 6
+                x: 6
+                y: 4
+              type: absolute
+            type: chart
+        position:
+          absolute:
+            h: 7
+            w: 12
+            x: 0
+            y: 8
+          type: absolute
+        type: group
+      - group:
+          title: Pods by Application
+          widgets:
+          - chart:
+              chartType: bar
+              expression:
+                metoroQLQueries:
+                - displaySettings: {}
+                  query: sum(karpenter_pods_state{nodepool="$nodepool", owner=~"$application.*"})
+              title: Number of pods
+            position:
+              absolute:
+                h: 2
+                w: 6
+                x: 0
+                y: 0
+              type: absolute
+            type: chart
+          - chart:
+              chartType: area
+              expression:
+                metoroQLQueries:
+                - displaySettings:
+                    label: ""
+                    lineSettings:
+                      lineDotSize: 3
+                      lineType: solid
+                  query: sum(karpenter_pods_state{nodepool="$nodepool", owner=~"$application"})
+                    by (zone)
+              title: Pod AZ Distribution
+            position:
+              absolute:
+                h: 2
+                w: 6
+                x: 6
+                y: 0
+              type: absolute
+            type: chart
+          - chart:
+              chartType: bar
+              expression:
+                metoroQLQueries:
+                - displaySettings:
+                    label: ""
+                    lineSettings:
+                      lineDotSize: 3
+                      lineType: solid
+                  query: (max(karpenter_pods_state{nodepool="$nodepool", owner=~"$application"}))
+                    - (min(karpenter_pods_state{nodepool="$nodepool", owner=~"$application"}))
+              title: 'Skew '
+            position:
+              absolute:
+                h: 2
+                w: 12
+                x: 0
+                y: 2
+              type: absolute
+            type: chart
+        position:
+          absolute:
+            h: 5
+            w: 12
+            x: 0
+            y: 15
+          type: absolute
+        type: group
+    metadata:
+      id: karpenter-overview-1
+      title: Karpenter
+    

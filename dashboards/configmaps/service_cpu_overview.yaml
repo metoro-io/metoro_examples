@@ -1,0 +1,342 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: dashboard-service-cpu
+  labels:
+    metoro.io/dashboard: "true"
+data:
+  dashboard.yaml: |
+    content:
+      title: Service CPU Overview
+      variables:
+        - defaultValue: '*'
+          name: environment
+          overridable: true
+          selector:
+            dynamic:
+              attributeKey: environment
+              selectorQueries:
+                - avg(container_resources_cpu_usage_seconds_total)
+        - defaultValue: '*'
+          name: service_name
+          overridable: true
+          selector:
+            dynamic:
+              attributeKey: service_name
+              selectorQueries:
+                - avg(container_resources_cpu_usage_seconds_total)
+        - defaultValue: '*'
+          name: pod_name
+          overridable: true
+          selector:
+            dynamic:
+              attributeKey: pod_name
+              selectorQueries:
+                - avg(container_resources_cpu_usage_seconds_total)
+      widgets:
+        - markdown:
+            content: |-
+              ### CPU Usage
+              This template serves as a starting point to look into cpu usage across your containers. Adapt this to your own needs!
+              
+              
+              Cpu Usage - This shows the number of cores used across the service, the aggregates across pods in the service and the pods themselves
+          position:
+            absolute:
+              h: 3
+              w: 3
+              x: 0
+              y: 0
+            type: absolute
+          type: markdown
+        - chart:
+            chartType: line
+            expression:
+              metoroQLQueries:
+                - displaySettings:
+                    label: Total CPU Usage
+                    lineSettings:
+                      lineColour: '#4bc0c0'
+                      lineDotColor: '#4bc0c033'
+                      lineType: solid
+                  query: sum(rate(container_resources_cpu_usage_seconds_total{environment="$environment",
+                    service_name="$service_name", pod_name="$pod_name"}))
+                - displaySettings:
+                    label: CPU Limit
+                    lineSettings:
+                      lineColour: '#ff6384'
+                      lineDotColor: '#ff638400'
+                      lineDotSize: 0
+                      lineType: dash
+                  query: sum(container_resources_cpu_limit_cores{service_name="$service_name",
+                    pod_name="$pod_name", environment="$environment"})
+            title: Total Service CPU Usage
+          position:
+            absolute:
+              h: 3
+              w: 3
+              x: 3
+              y: 0
+            type: absolute
+          type: chart
+        - chart:
+            chartType: line
+            expression:
+              metoroQLQueries:
+                - displaySettings:
+                    label: Min Pod CPU Usage
+                    lineSettings:
+                      lineColour: '#4bc0c0'
+                      lineDotColor: '#4bc0c033'
+                      lineType: solid
+                  query: min(rate(container_resources_cpu_usage_seconds_total{environment="$environment",
+                    service_name="$service_name", pod_name="$pod_name"}))
+                - displaySettings:
+                    label: Max Pod CPU Usage
+                    lineSettings:
+                      lineColour: '#3793ff'
+                      lineDotColor: '#3793ff33'
+                      lineType: solid
+                  query: max(rate(container_resources_cpu_usage_seconds_total{environment="$environment",
+                    service_name="$service_name", pod_name="$pod_name"}))
+                - displaySettings:
+                    label: Avg Pod CPU Usage
+                    lineSettings:
+                      lineColour: '#ffce56'
+                      lineDotColor: '#ffce5633'
+                      lineType: solid
+                  query: avg(rate(container_resources_cpu_usage_seconds_total{environment="$environment",
+                    service_name="$service_name", pod_name="$pod_name"}))
+                - displaySettings:
+                    label: CPU Limit
+                    lineSettings:
+                      lineColour: '#ff6384'
+                      lineDotColor: '#ff638400'
+                      lineDotSize: 0
+                      lineType: dash
+                  query: max(container_resources_cpu_limit_cores{service_name="$service_name",
+                    environment="$environment", pod_name="$pod_name"})
+            title: Service CPU Usage - Aggregates
+          position:
+            absolute:
+              h: 3
+              w: 3
+              x: 6
+              y: 0
+            type: absolute
+          type: chart
+        - chart:
+            chartType: line
+            expression:
+              metoroQLQueries:
+                - displaySettings:
+                    label: CPU Limit
+                    lineSettings:
+                      lineColour: '#ff6384'
+                      lineDotColor: '#ff638400'
+                      lineDotSize: 0
+                      lineType: dash
+                  query: max(container_resources_cpu_limit_cores{service_name="$service_name",
+                    environment="$environment", pod_name="$pod_name"})
+                - displaySettings:
+                    label: CPU Usage
+                  query: max(rate(container_resources_cpu_usage_seconds_total{service_name="$service_name",
+                    environment="$environment", pod_name="$pod_name"})) by (pod_name)
+            title: Service CPU Usage - Top pods
+          position:
+            absolute:
+              h: 3
+              w: 3
+              x: 9
+              y: 0
+            type: absolute
+          type: chart
+        - markdown:
+            content: "### CPU Delay\n\nCpu Delay Seconds shows the number of seconds that
+            a container was suspended for from a cpu due to **either** *cpu limits* or
+            *resource starvation* on the node. So for example, if the throttled seconds
+            is 30, that means that the application wanted to use more cpu for 30 seconds
+            in that time period but was denied it. \n\nThis is particularly bad in services
+            the primarily serve requests as this manifests as increased latency."
+          position:
+            absolute:
+              h: 3
+              w: 3
+              x: 0
+              y: 3
+            type: absolute
+          type: markdown
+        - chart:
+            chartType: bar
+            expression:
+              metoroQLQueries:
+                - displaySettings:
+                    label: Total Delay Seconds
+                    lineSettings:
+                      lineColour: '#4bc0c0'
+                      lineDotColor: '#4bc0c033'
+                      lineType: solid
+                  query: sum(container_resources_cpu_delay_seconds_total{environment="$environment",
+                    service_name="$service_name", pod_name="$pod_name"})
+            title: Total Service CPU Delay
+          position:
+            absolute:
+              h: 3
+              w: 3
+              x: 3
+              y: 3
+            type: absolute
+          type: chart
+        - chart:
+            chartType: line
+            expression:
+              metoroQLQueries:
+                - displaySettings:
+                    label: Min Pod CPU Delay Seconds
+                    lineSettings:
+                      lineColour: '#4bc0c0'
+                      lineDotColor: '#4bc0c033'
+                      lineType: solid
+                  query: min(container_resources_cpu_delay_seconds_total{environment="$environment",
+                    service_name="$service_name", pod_name="$pod_name"})
+                - displaySettings:
+                    label: Max Pod CPU Delay Seconds
+                    lineSettings:
+                      lineColour: '#3793ff'
+                      lineDotColor: '#3793ff33'
+                      lineType: solid
+                  query: max(container_resources_cpu_delay_seconds_total{environment="$environment",
+                    service_name="$service_name", pod_name="$pod_name"})
+                - displaySettings:
+                    label: Avg Pod CPU Delay Seconds
+                    lineSettings:
+                      lineColour: '#ffce56'
+                      lineDotColor: '#ffce5633'
+                      lineType: solid
+                  query: avg(container_resources_cpu_delay_seconds_total{environment="$environment",
+                    service_name="$service_name", pod_name="$pod_name"})
+            title: Service CPU Delay - Aggregates
+          position:
+            absolute:
+              h: 3
+              w: 3
+              x: 6
+              y: 3
+            type: absolute
+          type: chart
+        - chart:
+            chartType: line
+            expression:
+              metoroQLQueries:
+                - displaySettings:
+                    label: Cpu Delay Seconds
+                  query: max(container_resources_cpu_delay_seconds_total{service_name="$service_name",
+                    environment="$environment", pod_name="$pod_name"}) by (pod_name)
+            title: Service CPU Delay - Top pods
+          position:
+            absolute:
+              h: 3
+              w: 3
+              x: 9
+              y: 3
+            type: absolute
+          type: chart
+        - markdown:
+            content: "### CPU Throttling\n\nCpu Throttling Seconds shows the number of seconds
+            that a container was suspended for from a cpu due to cpu limits. It a subset
+            of cpu delay. So for example, if the throttled seconds is 30, that means that
+            the application wanted to use more cpu for 30 seconds in that time period
+            but was denied it because of kubernetes limits. \n\nThis might seem confusing
+            at first if your cpu usage is under the limit. The default quota period in
+            Kubernetes is 100 milliseconds. So if you define a CPU limit of 50 millicores
+            for a pod, it sets up a linux cgroup CPU quota of 5ms for each 100ms period.
+            So therefore if in one 100ms period, the container needs to use more than
+            5milliseconds of cpu, throttling will occur.\n\nThis is particularly bad in
+            services the primarily serve requests as this manifests as increased latency."
+          position:
+            absolute:
+              h: 3
+              w: 3
+              x: 0
+              y: 6
+            type: absolute
+          type: markdown
+        - chart:
+            chartType: bar
+            expression:
+              metoroQLQueries:
+                - displaySettings:
+                    label: Total Throttled Seconds
+                    lineSettings:
+                      lineColour: '#4bc0c0'
+                      lineDotColor: '#4bc0c033'
+                      lineType: solid
+                  query: sum(container_resources_cpu_throttled_seconds_total{environment="$environment",
+                    service_name="$service_name", pod_name="$pod_name"})
+            title: Total Service CPU Throttling
+          position:
+            absolute:
+              h: 3
+              w: 3
+              x: 3
+              y: 6
+            type: absolute
+          type: chart
+        - chart:
+            chartType: line
+            expression:
+              metoroQLQueries:
+                - displaySettings:
+                    label: Min Pod CPU Throttled Seconds
+                    lineSettings:
+                      lineColour: '#4bc0c0'
+                      lineDotColor: '#4bc0c033'
+                      lineType: solid
+                  query: min(container_resources_cpu_throttled_seconds_total{environment="$environment",
+                    service_name="$service_name", pod_name="$pod_name"})
+                - displaySettings:
+                    label: Max Pod CPU Throttled Seconds
+                    lineSettings:
+                      lineColour: '#3793ff'
+                      lineDotColor: '#3793ff33'
+                      lineType: solid
+                  query: max(container_resources_cpu_throttled_seconds_total{environment="$environment",
+                    service_name="$service_name", pod_name="$pod_name"})
+                - displaySettings:
+                    label: Avg Pod CPU Throttled Seconds
+                    lineSettings:
+                      lineColour: '#ffce56'
+                      lineDotColor: '#ffce5633'
+                      lineType: solid
+                  query: avg(container_resources_cpu_throttled_seconds_total{pod_name="$pod_name",
+                    environment="$environment", service_name="$service_name"})
+            title: Service CPU Throttling - Aggregates
+          position:
+            absolute:
+              h: 3
+              w: 3
+              x: 6
+              y: 6
+            type: absolute
+          type: chart
+        - chart:
+            chartType: line
+            expression:
+              metoroQLQueries:
+                - displaySettings:
+                    label: Cpu Throttled Seconds
+                  query: max(container_resources_cpu_throttled_seconds_total{pod_name="$pod_name",
+                    service_name="$service_name", environment="$environment"}) by (pod_name)
+            title: Service CPU Throttling - Top pods
+          position:
+            absolute:
+              h: 3
+              w: 3
+              x: 9
+              y: 6
+            type: absolute
+          type: chart
+    metadata:
+      id: service-cpu-1
+      title: Service CPU Overview
+    
