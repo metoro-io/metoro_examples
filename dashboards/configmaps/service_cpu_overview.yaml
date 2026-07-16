@@ -24,7 +24,7 @@ data:
             dynamic:
               attributeKey: service_name
               selectorQueries:
-                - avg(container_resources_cpu_usage_seconds_total)
+                - 'avg(container_resources_cpu_usage_seconds_total{environment="$environment"})'
         - defaultValue: '*'
           name: pod_name
           overridable: true
@@ -32,7 +32,7 @@ data:
             dynamic:
               attributeKey: pod_name
               selectorQueries:
-                - avg(container_resources_cpu_usage_seconds_total)
+                - 'avg(container_resources_cpu_usage_seconds_total{environment="$environment", service_name="$service_name"})'
       widgets:
         - markdown:
             content: |-
