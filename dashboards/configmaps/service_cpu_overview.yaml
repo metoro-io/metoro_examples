@@ -139,7 +139,7 @@ data:
                   query: max(container_resources_cpu_limit_cores{service_name="$service_name",
                     environment="$environment", pod_name="$pod_name"})
                 - displaySettings:
-                    label: CPU Usage
+                    label: 'CPU Usage - {{pod_name}}'
                   query: max(rate(container_resources_cpu_usage_seconds_total{service_name="$service_name",
                     environment="$environment", pod_name="$pod_name"})) by (pod_name)
             title: Service CPU Usage - Top pods
@@ -229,7 +229,7 @@ data:
             expression:
               metoroQLQueries:
                 - displaySettings:
-                    label: Cpu Delay Seconds
+                    label: 'Cpu Delay Seconds - {{pod_name}}'
                   query: max(container_resources_cpu_delay_seconds_total{service_name="$service_name",
                     environment="$environment", pod_name="$pod_name"}) by (pod_name)
             title: Service CPU Delay - Top pods
@@ -324,7 +324,7 @@ data:
             expression:
               metoroQLQueries:
                 - displaySettings:
-                    label: Cpu Throttled Seconds
+                    label: 'Cpu Throttled Seconds - {{pod_name}}'
                   query: max(container_resources_cpu_throttled_seconds_total{pod_name="$pod_name",
                     service_name="$service_name", environment="$environment"}) by (pod_name)
             title: Service CPU Throttling - Top pods

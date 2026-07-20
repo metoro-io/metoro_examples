@@ -139,7 +139,7 @@ data:
               query: max(container_resources_memory_limit_bytes{service_name="$service_name",
                 environment="$environment", pod_name="$pod_name"})
             - displaySettings:
-                label: CPU Usage
+                label: 'CPU Usage - {{pod_name}}'
               query: max(container_resources_memory_rss_bytes{environment="$environment",
                 pod_name="$pod_name", service_name="$service_name"}) by (pod_name)
           title: Service Memory Usage - Top pods
@@ -187,7 +187,8 @@ data:
           chartType: bar
           expression:
             metoroQLQueries:
-            - displaySettings: {}
+            - displaySettings:
+                label: 'OOM Kills - {{pod_name}}'
               query: sum(container_oom_kills_total{environment="$environment", service_name="$service_name",
                 pod_name="$pod_name"}) by (pod_name)
           title: Top OOM Kills by Pod
@@ -203,7 +204,8 @@ data:
           chartType: bar
           expression:
             metoroQLQueries:
-            - displaySettings: {}
+            - displaySettings:
+                label: 'OOM Kills - {{node.label.kubernetes.io/hostname}}'
               query: sum(container_oom_kills_total{service_name="$service_name", pod_name="$pod_name",
                 environment="$environment"}) by (node.label.kubernetes.io/hostname)
           title: Top OOM Kills by Node
