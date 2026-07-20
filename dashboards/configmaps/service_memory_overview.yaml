@@ -139,7 +139,7 @@ data:
               query: max(container_resources_memory_limit_bytes{service_name="$service_name",
                 environment="$environment", pod_name="$pod_name"})
             - displaySettings:
-                label: 'CPU Usage - {{pod_name}}'
+                label: 'Memory Usage - {{pod_name}}'
               query: max(container_resources_memory_rss_bytes{environment="$environment",
                 pod_name="$pod_name", service_name="$service_name"}) by (pod_name)
           title: Service Memory Usage - Top pods
