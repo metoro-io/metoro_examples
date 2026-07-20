@@ -96,7 +96,7 @@ data:
           expression:
             metoroQLQueries:
             - displaySettings:
-                label: Max Pod Bytes Sent
+                label: 'Max Pod Bytes Sent - {{pod_name}}'
               query: max(rate(container_net_bytes_sent_total{service_name="$service_name",
                 environment="$environment", pod_name="$pod_name"})) by (pod_name)
           title: Service Network Usage - Bytes Sent - Top Pods
@@ -167,7 +167,7 @@ data:
           expression:
             metoroQLQueries:
             - displaySettings:
-                label: Max Pod Bytes Sent
+                label: 'Max Pod Bytes Received - {{pod_name}}'
               query: max(rate(container_net_bytes_received_total{service_name="$service_name",
                 environment="$environment", pod_name="$pod_name"})) by (pod_name)
           title: Service Network Usage - Bytes Received - Top Pods
@@ -238,7 +238,7 @@ data:
           expression:
             metoroQLQueries:
             - displaySettings:
-                label: Max Pod Bytes Sent
+                label: 'Max TCP Connections Opened Per Second - {{pod_name}}'
               query: max(rate(container_net_tcp_successful_connects_total{service_name="$service_name",
                 environment="$environment", pod_name="$pod_name"})) by (pod_name)
           title: Service TCP Connections Opened Per Second - Top Pods

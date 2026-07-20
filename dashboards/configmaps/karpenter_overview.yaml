@@ -234,6 +234,7 @@ data:
               expression:
                 metoroQLQueries:
                 - displaySettings:
+                    label: 'Nodes - {{zone}}'
                     unitOverride: Nodes
                   query: count(karpenter_nodes_total_pod_requests{resource_type="pods",
                     nodepool="$nodepool"}) by (zone)
@@ -251,6 +252,7 @@ data:
               expression:
                 metoroQLQueries:
                 - displaySettings:
+                    label: 'Pods - {{zone}}'
                     unitOverride: Pods
                   query: sum(karpenter_pods_state{nodepool="$nodepool"}) by (zone)
               title: Pod AZ Distribution
@@ -447,6 +449,7 @@ data:
               expression:
                 metoroQLQueries:
                 - displaySettings:
+                    label: 'Nodes - {{zone}}'
                     unitOverride: Nodes
                   query: count(karpenter_nodes_total_pod_requests{nodepool="$nodepool",
                     resource_type="pods"}) by (zone)
@@ -560,7 +563,7 @@ data:
               expression:
                 metoroQLQueries:
                 - displaySettings:
-                    label: ""
+                    label: 'Pods - {{zone}}'
                     lineSettings:
                       lineDotSize: 3
                       lineType: solid
