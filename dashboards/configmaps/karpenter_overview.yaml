@@ -24,7 +24,7 @@ data:
           dynamic:
             attributeKey: owner
             selectorQueries:
-            - avg(karpenter_pods_state)
+            - 'avg(karpenter_pods_state{nodepool="$nodepool"})'
       widgets:
       - group:
           title: Summary
